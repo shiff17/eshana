@@ -3,6 +3,45 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import MinMaxScaler
+
+# -------------------- UNIVERSAL RISK SCORING --------------------
+def compute_universal_risk(df):
+    """
+    Compute risk, severity, and vulnerability universally for any dataset.
+    Works even if dataset has no severity/status columns.
+    """
+    numeric_cols = df.select_dtypes(include=['number']).columns
+
+    if len(numeric_cols) == 0:
+        # If no numeric features, assign default Safe/Low risk
+        df["cvss"] = 0
+        df["severity"] = "Low"
+        df["status"] = "Safe"
+        return df
+
+    # Normalize numeric features
+    scaler = MinMaxScaler()
+    norm = scaler.fit_transform(df[numeric_cols])
+
+    # Risk score: average normalized values
+    risk_score = norm.mean(axis=1)
+    df["cvss"] = risk_score * 10   # scale to 0–10 (like CVSS)
+
+    # Map to severity levels
+    df["severity"] = pd.cut(
+        df["cvss"],
+        bins=[0, 3.9, 6.9, 8.9, 10],
+        labels=["Low", "Medium", "High", "Critical"]
+    )
+
+    # Assign vulnerability status
+    df["status"] = df["severity"].apply(
+        lambda x: "Vulnerable" if x in ["High", "Critical"] else "Safe"
+    )
+
+    return df
+
 
 # -------------------- VISUALIZATION FUNCTION --------------------
 def ml_visualizations(df, before_df=None):
@@ -83,6 +122,10 @@ if page == "Homepage":
 
     if uploaded:
         df = pd.read_csv(uploaded)
+
+        # Apply universal risk scoring if needed
+        if "severity" not in df.columns or "status" not in df.columns:
+            df = compute_universal_risk(df)
 
         st.subheader("📌 Raw Data (Before Cleaning)")
         st.dataframe(df, use_container_width=True)
@@ -187,7 +230,10 @@ if page == "Homepage":
         # -------------------- RL SELF-HEALING (SIMULATION) --------------------
         st.subheader("🤖 Reinforcement Learning (RL) Data Optimizer")
 
-        if "status" in df.columns and "severity_num" in df.columns:
+        if "status" in df.columns and "severity" in df.columns:
+            sev_map = {"Low": 1, "Medium": 2, "High": 3, "Critical": 4}
+            df["severity_num"] = df["severity"].map(sev_map).fillna(0)
+
             progress_bar = st.progress(0)
             rl_df = df.copy()
 
@@ -252,6 +298,11 @@ elif page == "Analytics":
 
     if uploaded:
         df = pd.read_csv(uploaded)
+
+        # Apply universal risk scoring if needed
+        if "severity" not in df.columns or "status" not in df.columns:
+            df = compute_universal_risk(df)
+
         before_len = len(df)
         df = df.dropna()
         after_len = len(df)
@@ -324,6 +375,11 @@ elif page == "Visualization":
     uploaded = st.file_uploader("Upload your vulnerability scan (CSV)", type=["csv"])
     if uploaded:
         df = pd.read_csv(uploaded)
+
+        # Apply universal risk scoring if needed
+        if "severity" not in df.columns or "status" not in df.columns:
+            df = compute_universal_risk(df)
+
         before_df = df.copy()
         df = df.dropna()
         ml_visualizations(df, before_df)
