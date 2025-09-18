@@ -129,7 +129,7 @@ page = st.sidebar.radio(
 
 # -------------------- HOMEPAGE --------------------
 if page == "Homepage":
-    st.title("🛡 MESS: Machine-driven Exploit Shielding System")
+    st.title("🛡 MESS.")
     uploaded = st.file_uploader("Upload your vulnerability scan (CSV)", type=["csv"])
 
     if uploaded:
