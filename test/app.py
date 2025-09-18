@@ -75,6 +75,7 @@ def ml_visualizations(df, before_df=None):
         st.plotly_chart(fig, use_container_width=True)
         st.caption("📦 Boxplot highlights spread and outliers in severity levels across systems.")
 
+
 # -------------------- NAVIGATION --------------------
 st.sidebar.title("🛡 Proactive Patch Automation")
 page = st.sidebar.radio(
@@ -129,6 +130,24 @@ if page == "Homepage":
 
         st.subheader("✨ Processed Data (After Cleaning & Self-Healing)")
         st.dataframe(df, use_container_width=True)
+
+        # -------------------- DONUT CHART (VULNERABILITY STATUS) --------------------
+        if "status" in df.columns:
+            st.subheader("🍩 Vulnerability Status (Donut Chart)")
+            status_counts = df["status"].value_counts().reset_index()
+            status_counts.columns = ["Status", "Count"]
+
+            fig_donut = px.pie(
+                status_counts,
+                values="Count",
+                names="Status",
+                hole=0.5,
+                title="Vulnerability Status Breakdown (After Cleaning)",
+                color="Status",
+                color_discrete_map={"Vulnerable": "#e63946", "Safe": "#2a9d8f"}
+            )
+            fig_donut.update_traces(textposition="inside", textinfo="percent+label")
+            st.plotly_chart(fig_donut, use_container_width=True)
 
         # Download
         st.download_button(
