@@ -191,4 +191,76 @@ elif page == "Analytics":
         df = pd.read_csv(uploaded)
         before_len = len(df)
         df = df.dropna()
-        after_len = le_
+        after_len = len(df)
+
+        st.subheader("Summary Statistics")
+        st.write(df.describe(include="all"))
+
+        st.info(
+            f"""
+            ℹ Dataset Overview  
+            - Original rows: {before_len} | After cleaning: {after_len}  
+            - Cleaning criteria: removed null values in key columns (e.g., severity, status).  
+            - Factors considered: severity levels, vulnerability status, clustering on severity.  
+            - Goal: Provide a cleaned dataset suitable for patch simulation and analysis.  
+            """
+        )
+
+        # Severity chart
+        if "severity" in df.columns:
+            counts = df["severity"].value_counts().reset_index()
+            counts.columns = ["Severity", "Count"]
+            fig = px.bar(counts, x="Severity", y="Count", text="Count",
+                         title="Vulnerability Severity Distribution")
+            st.plotly_chart(fig, use_container_width=True)
+
+        vuln_rate = None
+        if "status" in df.columns:
+            vuln_rate = (df["status"] == "Vulnerable").mean() * 100
+            status_counts = df["status"].value_counts().reset_index()
+            status_counts.columns = ["Status", "Count"]
+            fig2 = px.pie(status_counts, values="Count", names="Status",
+                          title="Vulnerability Status Distribution")
+            st.plotly_chart(fig2, use_container_width=True)
+            st.write(f"⚠ Vulnerable Systems: {vuln_rate:.2f}%")
+
+        st.subheader("Recommendations")
+        recs = []
+        if vuln_rate is not None:
+            if vuln_rate > 30:
+                recs.append("⚠ Immediate patching required: High percentage of vulnerable systems.")
+            elif vuln_rate > 10:
+                recs.append("🔄 Regular patch cycles should be enforced bi-weekly.")
+            else:
+                recs.append("✅ Vulnerability levels are low. Maintain current monitoring schedule.")
+
+        if "severity" in df.columns:
+            if "Critical" in df["severity"].values:
+                recs.append("🔥 Prioritize patching of Critical vulnerabilities first.")
+            if "High" in df["severity"].values:
+                recs.append("🚨 Ensure High severity issues are patched within 72 hours.")
+
+        recs.append("📊 Establish continuous monitoring to detect new threats early.")
+
+        for r in recs[:5]:
+            st.write("-", r)
+
+        if "severity" in df.columns:
+            fig = px.pie(df, names="severity", title="Severity Breakdown",
+                         color="severity", color_discrete_map={
+                             "Critical": "#e63946",
+                             "High": "#f77f00",
+                             "Medium": "#ffba08",
+                             "Low": "#43aa8b"
+                         })
+            st.plotly_chart(fig, use_container_width=True)
+
+# -------------------- VISUALIZATION --------------------
+elif page == "Visualization":
+    st.title("📈 MESS Visualization Dashboard")
+    uploaded = st.file_uploader("Upload your vulnerability scan (CSV)", type=["csv"])
+    if uploaded:
+        df = pd.read_csv(uploaded)
+        before_df = df.copy()
+        df = df.dropna()
+        ml_visualizations(df, before_df)
