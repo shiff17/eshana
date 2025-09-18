@@ -36,7 +36,7 @@ def compute_universal_risk(df):
     )
 
     # Assign vulnerability status
-    df["status"] = df["severity"].apply(
+    df["status"] = df["severity"].astype(str).apply(
         lambda x: "Vulnerable" if x in ["High", "Critical"] else "Safe"
     )
 
@@ -50,7 +50,7 @@ def ml_visualizations(df, before_df=None):
     # Severity numeric mapping for ML
     if "severity" in df.columns:
         sev_map = {"Low": 1, "Medium": 2, "High": 3, "Critical": 4}
-        df["severity_num"] = df["severity"].map(sev_map).fillna(0)
+        df["severity_num"] = df["severity"].astype(str).map(sev_map).fillna(0).astype(int)
 
     vis_type = st.selectbox(
         "Choose visualization",
@@ -123,7 +123,7 @@ if page == "Homepage":
     if uploaded:
         df = pd.read_csv(uploaded)
 
-        # Apply universal risk scoring if needed
+        # Ensure universal severity & status exist
         if "severity" not in df.columns or "status" not in df.columns:
             df = compute_universal_risk(df)
 
@@ -168,7 +168,7 @@ if page == "Homepage":
         # Clustering example
         if "severity" in df.columns:
             sev_map = {"Low": 1, "Medium": 2, "High": 3, "Critical": 4}
-            df["severity_num"] = df["severity"].map(sev_map).fillna(0)
+            df["severity_num"] = df["severity"].astype(str).map(sev_map).fillna(0).astype(int)
             km = KMeans(n_clusters=2, random_state=42, n_init=10)
             df["cluster"] = km.fit_predict(df[["severity_num"]])
 
@@ -232,7 +232,7 @@ if page == "Homepage":
 
         if "status" in df.columns and "severity" in df.columns:
             sev_map = {"Low": 1, "Medium": 2, "High": 3, "Critical": 4}
-            df["severity_num"] = df["severity"].map(sev_map).fillna(0)
+            df["severity_num"] = df["severity"].astype(str).map(sev_map).fillna(0).astype(int)
 
             progress_bar = st.progress(0)
             rl_df = df.copy()
@@ -299,7 +299,7 @@ elif page == "Analytics":
     if uploaded:
         df = pd.read_csv(uploaded)
 
-        # Apply universal risk scoring if needed
+        # Ensure universal severity & status exist
         if "severity" not in df.columns or "status" not in df.columns:
             df = compute_universal_risk(df)
 
@@ -349,9 +349,9 @@ elif page == "Analytics":
                 recs.append("✅ Vulnerability levels are low. Maintain current monitoring schedule.")
 
         if "severity" in df.columns:
-            if "Critical" in df["severity"].values:
+            if "Critical" in df["severity"].astype(str).values:
                 recs.append("🔥 Prioritize patching of Critical vulnerabilities first.")
-            if "High" in df["severity"].values:
+            if "High" in df["severity"].astype(str).values:
                 recs.append("🚨 Ensure High severity issues are patched within 72 hours.")
 
         recs.append("📊 Establish continuous monitoring to detect new threats early.")
@@ -376,7 +376,7 @@ elif page == "Visualization":
     if uploaded:
         df = pd.read_csv(uploaded)
 
-        # Apply universal risk scoring if needed
+        # Ensure universal severity & status exist
         if "severity" not in df.columns or "status" not in df.columns:
             df = compute_universal_risk(df)
 
