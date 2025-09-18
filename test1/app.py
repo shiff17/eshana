@@ -329,3 +329,22 @@ elif page == "Visualization":
         df = normalize_df(df)
         df = clean_for_analysis(df)
         ml_visualizations(df, before_df)
+        # Map CVSS scores into severity buckets
+def map_severity(cvss):
+    if cvss >= 9.0:
+        return "Critical"
+    elif cvss >= 7.0:
+        return "High"
+    elif cvss >= 4.0:
+        return "Medium"
+    elif cvss >= 0.1:
+        return "Low"
+    else:
+        return "None"
+
+df["severity"] = df["cvss"].apply(map_severity)
+
+# Simulate status if missing (e.g., based on CVSS threshold)
+if "status" not in df.columns:
+    df["status"] = df["cvss"].apply(lambda x: "Vulnerable" if x >= 4.0 else "Safe")
+
