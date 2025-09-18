@@ -1,7 +1,7 @@
 streamlit
 pandas
 numpy
-plotly as px
+import plotly.express as px
 scikit-learn
 matplotlib
 seaborn
