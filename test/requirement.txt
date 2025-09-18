@@ -1,7 +1,12 @@
+# Core framework
 streamlit
+
+# Data handling
 pandas
 numpy
+
+# Visualization
 plotly
+
+# Machine learning / clustering
 scikit-learn
-matplotlib
-seaborn
